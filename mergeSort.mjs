@@ -1,59 +1,57 @@
 import { sleep } from "./helpers.mjs";
 
-// let firstRenderMerge = true;
-// let originalData;
-// let idx;
-
 export const mergeSort = async (unsortedArray, callback, control) => {
-  if (control.stop) return ;
+  if (control.stop) return;
   const array = [...unsortedArray];
-
-  if (array.length <= 1) {
-    return array;
-  }
-
-  const middleIdx = Math.floor(array.length / 2);
-  callback("merge", array, middleIdx);
-  await sleep(control.time);
-
-  const leftSlice = array.slice(0, middleIdx);
-  const rightSlice = array.slice(middleIdx);
-
-  const sortedLeft = await mergeSort(leftSlice, callback, control);
-
-  const sortedRight = await mergeSort(rightSlice, callback, control);
-
-  // Track changes during merging
-  const mergedArray = merge(sortedLeft, sortedRight, callback, control);
-
-  return mergedArray;
+  const aux = new Array(array.length);
+  await mergeSortRange(array, aux, callback, control, 0, array.length);
+  return array;
 };
 
-const merge = async (left, right, callback, control) => {
-  if (control.stop) return ;
-  const newArray = [];
-  let leftIndex = 0;
-  let rightIndex = 0;
+const mergeSortRange = async (arr, aux, callback, control, lo, hi) => {
+  if (control.stop) return;
+  if (hi - lo <= 1) return;
 
-  while (leftIndex < left.length && rightIndex < right.length) {
-    if (left[leftIndex] < right[rightIndex]) {
-      newArray.push(left[leftIndex]);
-      leftIndex++;
+  const mid = Math.floor((lo + hi) / 2);
+  callback("merge", [...arr], lo, hi);
+  await sleep(control.time);
+
+  await mergeSortRange(arr, aux, callback, control, lo, mid);
+  await mergeSortRange(arr, aux, callback, control, mid, hi);
+
+  await mergeCombined(arr, aux, callback, control, lo, mid, hi);
+};
+
+const mergeCombined = async (arr, aux, callback, control, lo, mid, hi) => {
+  if (control.stop) return;
+
+  for (let k = lo; k < hi; k++) aux[k] = arr[k];
+
+  let i = lo;
+  let j = mid;
+  let out = lo;
+
+  const emit = () => {
+    callback("merge", [...arr], lo, hi);
+  };
+
+  while (i < mid && j < hi) {
+    if (aux[j] < aux[i]) {
+      arr[out++] = aux[j++];
     } else {
-      newArray.push(right[rightIndex]);
-      rightIndex++;
+      arr[out++] = aux[i++];
     }
+    emit();
+    await sleep(control.time);
   }
-
-  // Add the remaining elements from left and right (if any)
-  const finalArray = newArray.concat(
-    left.slice(leftIndex),
-    right.slice(rightIndex)
-  );
-  
-  callback("merge", finalArray, leftIndex);
-  await sleep(control.time);
-  callback("merge", finalArray, rightIndex);
-  await sleep(control.time);
-  return finalArray;
+  while (i < mid) {
+    arr[out++] = aux[i++];
+    emit();
+    await sleep(control.time);
+  }
+  while (j < hi) {
+    arr[out++] = aux[j++];
+    emit();
+    await sleep(control.time);
+  }
 };

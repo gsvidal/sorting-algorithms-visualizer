@@ -26,6 +26,7 @@ const algorithms = {
 
 const legendSelection = `
   <div class="legend-content border">
+    <p class="legend-description"><strong>How it works:</strong> Repeatedly scans the unsorted suffix to find the smallest remaining element, then swaps it into the correct position at the front. Each pass fixes one slot from left to right.</p>
     <div class="legend-container">
       <span class="legend-color legend-color--red"></span>: <span>Minimum value</span>
     </div>
@@ -38,6 +39,7 @@ const legendSelection = `
 
 const legendBubble = `
   <div class="legend-content border">
+    <p class="legend-description"><strong>How it works:</strong> Walks the array many times comparing neighbors; if two adjacent values are in the wrong order, it swaps them. After each outer pass the largest misplaced item tends to drift to its end—“bubbling” upward.</p>
     <div class="legend-container">
       <span class="legend-color legend-color--red"></span>: <span>Comparing values (swap)</span>
     </div>
@@ -49,6 +51,7 @@ const legendBubble = `
   `;
 const legendMerge = `
   <div class="legend-content border">
+    <p class="legend-description"><strong>How it works:</strong> Splits the range in half recursively until singletons are “sorted”, then merges pairs of sorted runs back together by repeatedly taking the smaller front element from either half.</p>
     <div class="legend-container">
       <span class="legend-color legend-color--main"></span>: <span>Sorting values</span>
     </div>
@@ -84,25 +87,22 @@ document.addEventListener("DOMContentLoaded", function () {
   const greenColor = "#85ff85";
   const renderCanvas = (alg, data, minIdx, currentIdx) => {
     if (alg === "merge") {
-      // console.log(data.length);
+      const mergeLo = minIdx ?? 0;
+      const mergeHi = currentIdx ?? data.length;
       const barWidth =
         (CANVAS_MAX_WIDTH -
           CANVAS_PADDING_X * 2 -
           barSpacing * (data.length - 2.5)) /
         data.length;
-      // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw bars
-      // console.log(minIdx);
-      // Draw bars for the current data
 
       for (let i = 0; i < data.length; i++) {
         const x = i * (barWidth + barSpacing);
         const y = canvas.height - data[i];
-        if (i > minIdx - 1) {
-          ctx.fillStyle = "#e1d7ff";
-        } else {
+        if (i >= mergeLo && i < mergeHi) {
           ctx.fillStyle = barColor;
+        } else {
+          ctx.fillStyle = "#e1d7ff";
         }
         ctx.fillRect(x, y, barWidth, data[i]);
       }

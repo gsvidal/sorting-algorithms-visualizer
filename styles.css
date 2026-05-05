@@ -117,6 +117,20 @@ select:disabled {
   display: inline-block;
   padding: 10px 20px;
   font-size: 1.4rem;
+  max-width: 920px;
+  text-align: left;
+}
+
+.legend-description {
+  font-size: 1.35rem;
+  font-weight: 300;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  color: var(--secondary);
+}
+
+.legend-description strong {
+  font-weight: 600;
 }
 
 .legend-container {
