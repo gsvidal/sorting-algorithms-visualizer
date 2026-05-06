@@ -33,7 +33,7 @@ const legendSelection = `
     <div class="legend-container">
       <span class="legend-color legend-color--green"></span>: <span>Current value</span>
     </div>
-    <p>Time complexity : O(n²)</p>
+    <p class='time-complexity'>Time complexity : O(n²)</p>
   </div>
   `;
 
@@ -46,7 +46,7 @@ const legendBubble = `
     <div class="legend-container">
       <span class="legend-color legend-color--green"></span>: <span>Comparing values (no swap)</span>
     </div>
-    <p>Time complexity : O(n²)</p>
+    <p class='time-complexity'>Time complexity : O(n²)</p>
   </div>
   `;
 const legendMerge = `
@@ -58,7 +58,7 @@ const legendMerge = `
     <div class="legend-container">
       <span class="legend-color legend-color--main-light"></span>: <span>No sorted values (yet)</span>
     </div>
-    <p>Time complexity : O(n log n)</p>
+    <p class='time-complexity'>Time complexity : O(n log n)</p>
   </div>
   `;
 
@@ -76,8 +76,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const canvas = document.getElementById("barChart");
   const ctx = canvas.getContext("2d");
   const legend = document.querySelector(".legend");
-  const speedInput = document.querySelector(".range--speed");
-  const sizeInput = document.querySelector(".range--size");
+  const delayInput = document.getElementById("stepDelay");
+  const sampleSizeInput = document.getElementById("sampleSize");
+  const sampleSizeValue = document.getElementById("sampleSizeValue");
+  const stepDelayValue = document.getElementById("stepDelayValue");
+
+  const syncSampleSizeLabel = () => {
+    sampleSizeValue.textContent = String(sampleSizeInput.value);
+  };
+  const syncDelayLabel = () => {
+    stepDelayValue.textContent = String(delayInput.value);
+  };
+
+  syncSampleSizeLabel();
+  syncDelayLabel();
 
   // Bar properties
   const barSpacing = 20;
@@ -152,15 +164,21 @@ document.addEventListener("DOMContentLoaded", function () {
   renderCanvas(alg, defaultArray, minIdx, currentIdx);
 
   const selectElement = document.querySelector("select");
+  const runButton = document.querySelector(".button--run");
 
   const control = {
-    time: +speedInput.value,
+    time: +delayInput.value,
     stop: false,
+  };
+
+  const syncRunAvailability = () => {
+    runButton.disabled = selectElement.value === "none";
   };
 
   const reset = (size = 10, reset) => {
     if (reset) {
-      sizeInput.value = 10;
+      sampleSizeInput.value = "10";
+      syncSampleSizeLabel();
     }
     selectElement.value = "none";
     defaultArray = [...generateArray(size)];
@@ -168,16 +186,21 @@ document.addEventListener("DOMContentLoaded", function () {
     control.stop = true;
     renderCanvas("none", defaultArray);
     legend.innerHTML = "";
+    syncRunAvailability();
   };
 
   const resetButton = document.querySelector(".button--reset");
 
   resetButton.addEventListener("click", () => reset(10, true));
 
-  selectElement.addEventListener("change", async (event) => {
-    event.target.setAttribute("disabled", true);
-    const selectedAlgorithm = event.target.value;
-    if (selectedAlgorithm !== "none") {
+  const runSelectedSort = async () => {
+    const selectedAlgorithm = selectElement.value;
+    if (selectedAlgorithm === "none") return;
+
+    runButton.disabled = true;
+    selectElement.setAttribute("disabled", "true");
+
+    try {
       legend.innerHTML = legendText[selectedAlgorithm];
       control.stop = false;
       const sortedArray = await algorithms[selectedAlgorithm](
@@ -188,14 +211,35 @@ document.addEventListener("DOMContentLoaded", function () {
       if (sortedArray?.length > 0) {
         renderCanvas("none", sortedArray);
       }
+    } finally {
+      selectElement.removeAttribute("disabled");
+      syncRunAvailability();
     }
+  };
+
+  selectElement.addEventListener("change", () => {
+    const selectedAlgorithm = selectElement.value;
+    if (selectedAlgorithm === "none") {
+      legend.innerHTML = "";
+    } else {
+      legend.innerHTML = legendText[selectedAlgorithm];
+    }
+    syncRunAvailability();
   });
 
-  speedInput.addEventListener("change", (event) => {
-    control.time = event.target.value;
+  runButton.addEventListener("click", () => runSelectedSort());
+
+  syncRunAvailability();
+
+  delayInput.addEventListener("input", (event) => {
+    syncDelayLabel();
+    control.time = +event.target.value;
   });
 
-  sizeInput.addEventListener("change", (event) => {
+  sampleSizeInput.addEventListener("input", syncSampleSizeLabel);
+
+  sampleSizeInput.addEventListener("change", (event) => {
+    syncSampleSizeLabel();
     reset(+event.target.value);
   });
 });

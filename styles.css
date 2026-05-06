@@ -18,7 +18,7 @@ html {
 
 body {
   width: 90%;
-  height: 100vh;
+  min-height: 100vh;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -39,17 +39,95 @@ body {
   background-image: linear-gradient(to right, #9c7eff, #85aeff);
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-fill-color: transparent;
 }
 
-.controls-container {
+.controls-panel {
+  width: 100%;
+  max-width: 1000px;
+  margin-bottom: 0;
+}
+
+.controls-panel.border {
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.controls-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.6rem 2.4rem;
+  padding: 0 0.8rem;
+}
+
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 220px;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.control-field--algo {
+  min-width: 240px;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.control-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.6rem;
+  font-weight: 500;
+  font-size: 1.55rem;
+  color: var(--secondary);
+}
+
+.control-value {
+  font-weight: 700;
+  color: var(--main);
+}
+
+.control-unit {
+  font-weight: 400;
+  font-size: 1.35rem;
+  opacity: 0.85;
+}
+
+.range-row {
+  display: flex;
   align-items: center;
+  gap: 0.8rem;
+}
+
+.range-hint {
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--main);
+  opacity: 0.95;
+}
+
+.range-row .range {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.controls-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 10px;
   width: 100%;
-  height: 240px;
-  max-width: 1000px;
+  max-width: 220px;
+  flex-basis: 100%;
+  margin-inline: auto;
 }
 
 @media screen and (min-width: 460px) {
@@ -62,45 +140,51 @@ body {
   body {
     width: 80%;
   }
+
   .title {
     font-size: 4.5rem;
   }
 }
 
-@media screen and (min-width: 1024px) {
-  .controls-container {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    height: 100px;
-  }
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.85rem;
+  background: var(--main);
+  border-radius: 1rem;
 }
 
-.select-container {
-  display: block;
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: scale(2);
+  box-shadow: 0 0 6px 0px #ffffff88;
+  cursor: grab;
+  border: 2px solid var(--main);
+  transition: 0.2s;
+  position: relative;
 }
 
-select {
-  padding: 5px;
-  cursor: pointer;
-  color: var(--main);
-  font-size: 1.8rem;
-  transition: color 0.25s ease-in-out;
+.range::-webkit-slider-thumb:active {
+  transform: scale(2.4);
 }
 
-select:hover {
-  border-color: #583bb7;
-  color: #583bb7;
-}
-
-select:disabled {
-  cursor: not-allowed;
-  color: grey;
-  border-color: grey;
+.range::-moz-range-thumb {
+  background-color: #fff;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px 0px #ffffff88;
+  cursor: grab;
+  border: 2px solid var(--main);
 }
 
 .border {
-  padding: 15px;
+  padding: 8px;
   margin: 15px;
   border: 1px solid #9c7eff;
   border-radius: 10px;
@@ -166,7 +250,6 @@ select:disabled {
 
 .button {
   display: inline-block;
-  margin: 10px 0;
   outline: 0;
   border: 0;
   cursor: pointer;
@@ -174,86 +257,93 @@ select:disabled {
   font-weight: 500;
   border-radius: 4px;
   font-size: 14px;
-  height: 35px;
-  padding: 0px 15px;
+  /* width: 100px; */
+  height: 40px;
+  padding: 0 18px;
   text-shadow: rgb(0 0 0 / 25%) 0px 3px 8px;
-  background: linear-gradient(
-    92.88deg,
-    rgb(69, 94, 181) 9.16%,
-    rgb(86, 67, 204) 43.89%,
-    rgb(103, 63, 215) 64.72%
-  );
+  background: linear-gradient(92.88deg,
+      rgb(69, 94, 181) 9.16%,
+      rgb(86, 67, 204) 43.89%,
+      rgb(103, 63, 215) 64.72%);
   transition: all 0.5s ease 0s;
+  white-space: nowrap;
 }
+
+.button:focus-visible {
+  outline: 2px solid var(--main);
+  outline-offset: 3px;
+}
+
 .button:hover {
   box-shadow: rgb(80 63 205 / 50%) 0px 1px 40px;
   transition: all 0.1s ease 0s;
 }
+
 .button:active {
-  background: linear-gradient(
-    92.88deg,
-    rgb(31, 58, 156) 9.16%,
-    rgb(47, 31, 146) 43.89%,
-    rgb(53, 23, 134) 64.72%
-  );
+  background: linear-gradient(92.88deg,
+      rgb(31, 58, 156) 9.16%,
+      rgb(47, 31, 146) 43.89%,
+      rgb(53, 23, 134) 64.72%);
 }
 
-.range-container {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 220px;
+.button--run {
+  color: #0d2a12;
+  text-shadow: none;
+  font-weight: 600;
+  background: linear-gradient(145deg,
+      rgb(103, 207, 132) 0%,
+      rgb(52, 185, 96) 45%,
+      rgb(27, 144, 53) 100%);
 }
 
-.range-container label {
-  position: relative;
-  top: -2px;
+.button--run:hover {
+  box-shadow: rgb(56 176 96 / 45%) 0px 1px 36px;
 }
 
-.range {
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--main);
-  border-radius: 1rem;
-  margin: 1rem;
+.button--run:active {
+  background: linear-gradient(145deg,
+      rgb(112, 223, 141) 0%,
+      rgb(59, 200, 106) 50%,
+      rgb(20, 148, 50) 100%);
 }
 
-.range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  background-color: #fff;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  transform: scale(2);
-  box-shadow: 0 0 6px 0px #ffffff88;
-  cursor: grab;
-  border: 2px solid var(--main);
-  transition: 0.2s;
-  position: relative;
+.button--run:disabled {
+  cursor: not-allowed;
+  color: white;
+  background: linear-gradient(145deg,
+      rgb(134, 138, 135) 0%,
+      rgb(106, 111, 108) 100%);
+  box-shadow: none;
 }
 
-.range::-webkit-slider-thumb:active {
-  transform: scale(2.4);
-}
-
-.range-text {
-  display: inline-block;
-  position: absolute;
-  top: 20px;
-  width: 40px;
-  height: 15px;
-  font-size: 2.2rem;
-  font-weight: bold;
+.select-input {
+  width: 100%;
+  cursor: pointer;
   color: var(--main);
-  user-select: none;
+  font-size: 1.65rem;
+  transition: color 0.25s ease-in-out, border-color 0.25s ease-in-out;
 }
 
-.range-text--left {
-  left: 65px;
+.select-input.border {
+  margin: 0;
 }
 
-.range-text--right {
-  left: 187px;
+.select-input:hover {
+  border-color: #583bb7;
+  color: #583bb7;
+}
+
+.select-input:focus-visible {
+  outline: 2px solid var(--main);
+  outline-offset: 2px;
+}
+
+.select-input:disabled {
+  cursor: not-allowed;
+  color: grey;
+  border-color: grey;
+}
+
+.time-complexity {
+  margin-top: 2rem;
 }

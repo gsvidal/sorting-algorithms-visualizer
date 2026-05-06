@@ -10,59 +10,80 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&family=Rubik+Glitch&display=swap"
       rel="stylesheet"
     />
-    <title>Bar Chart</title>
+    <title>Sorting visualizer</title>
   </head>
   <body>
     <h1 class="title">
       Sorting Algorithm <span class="title-secondary">Visualizer</span>
     </h1>
-    <div class="controls-container">
-      <div class="range-container">
-        <label for="size">Size</label>
-        <input
-          id="size"
-          class="range range--size"
-          type="range"
-          min="6"
-          max="26"
-          step="2"
-          value="10"
-        />
-        <span class="range-text range-text--left">-</span>
-        <span class="range-text range-text--right">+</span>
-      </div>
-      <div class="range-container">
-        <label for="speed">Speed</label>
-        <input
-          id="speed"
-          class="range range--speed"
-          type="range"
-          min="40"
-          max="1000"
-          step="10"
-          value="300"
-        />
-        <span class="range-text range-text--left">+</span>
-        <span class="range-text range-text--right">-</span>
-      </div>
-      <div class="select-container">
-        <label for="algorithm">Algorithm: </label>
-        <select class="border" name="algorithm" id="algorithm">
-          <option class="option" value="none">-- Select an Algorithm --</option>
-          <option class="option" value="selection">Selection Sort</option>
-          <option class="option" value="bubble">Bubble Sort</option>
-          <option class="option" value="merge">Merge Sort</option>
-        </select>
+
+    <div class="controls-panel border">
+      <div class="controls-toolbar">
+        <div class="control-field">
+          <label class="control-label" for="sampleSize">
+            Sample size
+            <span class="control-value" id="sampleSizeValue" aria-live="polite">10</span>
+          </label>
+          <div class="range-row">
+            <span class="range-hint">small</span>
+            <input
+              id="sampleSize"
+              class="range range--sample-size"
+              type="range"
+              min="6"
+              max="26"
+              step="1"
+              value="10"
+            />
+            <span class="range-hint">large</span>
+          </div>
+        </div>
+
+        <div class="control-field">
+          <label class="control-label" for="stepDelay">
+            Step delay
+            <span class="control-unit">(ms)</span>
+            <span class="control-value" id="stepDelayValue" aria-live="polite">300</span>
+          </label>
+          <div class="range-row">
+            <span class="range-hint">fast</span>
+            <input
+              id="stepDelay"
+              class="range range--step-delay"
+              type="range"
+              min="40"
+              max="1000"
+              step="10"
+              value="300"
+            />
+            <span class="range-hint">slow</span>
+          </div>
+        </div>
+
+        <div class="control-field control-field--algo">
+          <label class="control-label" for="algorithm">Sort method</label>
+          <select class="select-input border" name="algorithm" id="algorithm">
+            <option class="option" value="none">— Pick one —</option>
+            <option class="option" value="selection">Selection sort</option>
+            <option class="option" value="bubble">Bubble sort</option>
+            <option class="option" value="merge">Merge sort</option>
+          </select>
+        </div>
+
+        <div class="controls-actions">
+          <button type="button" class="button button--run">Run</button>
+          <button type="button" class="button button--reset">Reset</button>
+        </div>
       </div>
     </div>
-    <button class="button button--reset">Reset</button>
+
     <canvas
       class="canvas border"
       id="barChart"
       width="1000"
-      height="300"
+      height="500"
     ></canvas>
-    <p class="legend"></p>
+    <p class="legend" role="region" aria-label="Legend and complexity"></p>
 
     <script type="module" src="./index.js"></script>
   </body>
