@@ -1,6 +1,7 @@
 import { selectionSort } from "./selectionSort.mjs";
 import { bubbleSort } from "./bubbleSort.mjs";
 import { mergeSort } from "./mergeSort.mjs";
+import { insertionSort } from "./insertionSort.mjs";
 
 const CANVAS_MAX_HEIGHT = 500;
 const CANVAS_MAX_WIDTH = 1000;
@@ -22,6 +23,7 @@ const algorithms = {
   selection: selectionSort,
   bubble: bubbleSort,
   merge: mergeSort,
+  insertion: insertionSort,
 };
 
 const legendSelection = `
@@ -61,11 +63,24 @@ const legendMerge = `
     <p class='time-complexity'>Time complexity : O(n log n)</p>
   </div>
   `;
+const legendInsertion = `
+  <div class="legend-content border">
+    <p class="legend-description"><strong>How it works:</strong> Builds a sorted prefix from left to right. For each new value, it shifts larger elements one position to the right until it finds the correct insertion point.</p>
+    <div class="legend-container">
+      <span class="legend-color legend-color--red"></span>: <span>Shifting value</span>
+    </div>
+    <div class="legend-container">
+      <span class="legend-color legend-color--green"></span>: <span>Current insertion target</span>
+    </div>
+    <p class='time-complexity'>Time complexity : O(n²)</p>
+  </div>
+  `;
 
 const legendText = {
   selection: legendSelection,
   bubble: legendBubble,
   merge: legendMerge,
+  insertion: legendInsertion,
 };
 
 let minIdx, currentIdx;
@@ -147,6 +162,20 @@ document.addEventListener("DOMContentLoaded", function () {
             ctx.fillStyle = barColor;
           }
         } else if (alg === "bubble-swap") {
+          if (i === minIdx || i === currentIdx) {
+            ctx.fillStyle = redColor;
+          } else {
+            ctx.fillStyle = barColor;
+          }
+        } else if (alg === "insertion") {
+          if (i === minIdx) {
+            ctx.fillStyle = greenColor;
+          } else if (i === currentIdx) {
+            ctx.fillStyle = redColor;
+          } else {
+            ctx.fillStyle = barColor;
+          }
+        } else if (alg === "insertion-shift") {
           if (i === minIdx || i === currentIdx) {
             ctx.fillStyle = redColor;
           } else {
