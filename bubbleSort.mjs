@@ -24,7 +24,12 @@
 import { sleep } from "./helpers.mjs";
 
 // ascending order
-export const bubbleSort = async (unsortedArray, callback, control) => {
+export const bubbleSort = async (
+  unsortedArray,
+  callback,
+  control,
+  swapAnimator
+) => {
   const array = [...unsortedArray];
 
   for (let i = 0; i < array.length; i++) {
@@ -32,11 +37,21 @@ export const bubbleSort = async (unsortedArray, callback, control) => {
     for (let j = 0; j < array.length - i - 1; j++) {
       if (control.stop) return;
       if (array[j] > array[j + 1]) {
-        //swap
-        const temp = array[j];
-        array[j] = array[j + 1];
-        array[j + 1] = temp;
+        const leftValue = array[j];
+        const rightValue = array[j + 1];
         swapped = true;
+
+        // Animate using pre-swap positions/values; mutating first causes
+        // visual mismatches where bar heights seem to belong to wrong indices.
+        if (typeof swapAnimator === "function") {
+          await swapAnimator(array, j, j + 1);
+        }
+
+        if (control.stop) return;
+
+        // Commit swap after animation.
+        array[j] = rightValue;
+        array[j + 1] = leftValue;
         callback("bubble-swap", array, j, j + 1);
         await sleep(control.time);
       } else {

@@ -112,81 +112,86 @@ document.addEventListener("DOMContentLoaded", function () {
   const barColor = "#9c7eff";
   const redColor = "#ff8383";
   const greenColor = "#85ff85";
+  const getBarMetrics = (dataLength) => {
+    const barWidth =
+      (CANVAS_MAX_WIDTH - CANVAS_PADDING_X * 2 - barSpacing * (dataLength - 2.5)) /
+      dataLength;
+    const stepX = barWidth + barSpacing;
+    return { barWidth, stepX };
+  };
+
+  const drawBars = (data, colorForIndex, xOffsetByIndex = {}) => {
+    const { barWidth, stepX } = getBarMetrics(data.length);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < data.length; i++) {
+      const x = i * stepX + (xOffsetByIndex[i] ?? 0);
+      const y = canvas.height - data[i];
+      ctx.fillStyle = colorForIndex(i);
+      ctx.fillRect(x, y, barWidth, data[i]);
+    }
+  };
+
+  const animateBubbleSwap = (data, leftIdx, rightIdx, control) =>
+    new Promise((resolve) => {
+      const duration = Math.max(80, Number(control.time) || 0);
+      const { stepX } = getBarMetrics(data.length);
+      const start = performance.now();
+
+      const tick = (now) => {
+        if (control.stop) {
+          resolve();
+          return;
+        }
+        const progress = Math.min((now - start) / duration, 1);
+        const displacement = stepX * progress;
+        drawBars(
+          data,
+          (idx) =>
+            idx === leftIdx || idx === rightIdx ? redColor : barColor,
+          {
+            [leftIdx]: displacement,
+            [rightIdx]: -displacement,
+          }
+        );
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          resolve();
+        }
+      };
+
+      requestAnimationFrame(tick);
+    });
+
   const renderCanvas = (alg, data, minIdx, currentIdx) => {
     if (alg === "merge") {
       const mergeLo = minIdx ?? 0;
       const mergeHi = currentIdx ?? data.length;
-      const barWidth =
-        (CANVAS_MAX_WIDTH -
-          CANVAS_PADDING_X * 2 -
-          barSpacing * (data.length - 2.5)) /
-        data.length;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < data.length; i++) {
-        const x = i * (barWidth + barSpacing);
-        const y = canvas.height - data[i];
-        if (i >= mergeLo && i < mergeHi) {
-          ctx.fillStyle = barColor;
-        } else {
-          ctx.fillStyle = "#e1d7ff";
-        }
-        ctx.fillRect(x, y, barWidth, data[i]);
-      }
+      drawBars(data, (i) => (i >= mergeLo && i < mergeHi ? barColor : "#e1d7ff"));
     } else {
-      const barWidth =
-        (CANVAS_MAX_WIDTH -
-          CANVAS_PADDING_X * 2 -
-          barSpacing * (data.length - 2.5)) /
-        data.length;
-      // Clear the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw bars
-      for (let i = 0; i < data.length; i++) {
-        const x = i * (barWidth + barSpacing);
-        const y = canvas.height - data[i];
-
+      drawBars(data, (i) => {
         if (alg === "selection") {
-          // Check if the current bar is the one to highlight as the minimum or the current
-          if (i === minIdx) {
-            ctx.fillStyle = redColor;
-          } else if (i === currentIdx) {
-            ctx.fillStyle = greenColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "bubble") {
-          if (i === minIdx || i === currentIdx) {
-            ctx.fillStyle = greenColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "bubble-swap") {
-          if (i === minIdx || i === currentIdx) {
-            ctx.fillStyle = redColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "insertion") {
-          if (i === minIdx) {
-            ctx.fillStyle = greenColor;
-          } else if (i === currentIdx) {
-            ctx.fillStyle = redColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "insertion-shift") {
-          if (i === minIdx || i === currentIdx) {
-            ctx.fillStyle = redColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else {
-          ctx.fillStyle = barColor;
+          if (i === minIdx) return redColor;
+          if (i === currentIdx) return greenColor;
+          return barColor;
         }
-        // Draw the bar
-        ctx.fillRect(x, y, barWidth, data[i]);
-      }
+        if (alg === "bubble") {
+          return i === minIdx || i === currentIdx ? greenColor : barColor;
+        }
+        if (alg === "bubble-swap") {
+          return i === minIdx || i === currentIdx ? redColor : barColor;
+        }
+        if (alg === "insertion") {
+          if (i === minIdx) return greenColor;
+          if (i === currentIdx) return redColor;
+          return barColor;
+        }
+        if (alg === "insertion-shift") {
+          return i === minIdx || i === currentIdx ? redColor : barColor;
+        }
+        return barColor;
+      });
     }
   };
 
@@ -235,7 +240,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const sortedArray = await algorithms[selectedAlgorithm](
         defaultArray,
         renderCanvas,
-        control
+        control,
+        (data, leftIdx, rightIdx) =>
+          animateBubbleSwap(data, leftIdx, rightIdx, control)
       );
       if (sortedArray?.length > 0) {
         renderCanvas("none", sortedArray);
