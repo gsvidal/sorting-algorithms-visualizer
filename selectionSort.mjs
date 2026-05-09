@@ -4,36 +4,41 @@
 
 import { sleep } from "./helpers.mjs";
 
-export const selectionSort = async (unsortedArray, callback, control) => {
+export const selectionSort = async (
+  unsortedArray,
+  callback,
+  control,
+  animators = {}
+) => {
   const array = [...unsortedArray];
 
   for (let i = 0; i < array.length - 1; i++) {
     let min = array[i];
     let minIdx = i;
-    let k;
-    let swap = 0;
-
     for (let j = i + 1; j < array.length; j++) {
       if (control.stop) return;
 
       if (array[j] < min) {
         min = array[j];
         minIdx = j;
-        k = j;
-        swap++;
       }
       callback("selection", array, minIdx, j);
       await sleep(control.time);
     }
-    if (swap !== 0) {
-      const temp = array[i];
-      array[i] = min;
-      array[k] = temp;
-    }
-    // console.log(array);
-    callback("selection", array, minIdx);
 
-    await sleep(control.time);
+    if (minIdx !== i) {
+      if (typeof animators.swap === "function") {
+        await animators.swap(array, i, minIdx);
+      }
+      const temp = array[i];
+      array[i] = array[minIdx];
+      array[minIdx] = temp;
+      callback("selection-swap", array, i, minIdx);
+      await sleep(control.time);
+    } else {
+      callback("selection", array, minIdx, i);
+      await sleep(control.time);
+    }
   }
   return array;
 };
