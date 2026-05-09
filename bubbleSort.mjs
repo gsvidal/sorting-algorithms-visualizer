@@ -28,7 +28,7 @@ export const bubbleSort = async (
   unsortedArray,
   callback,
   control,
-  swapAnimator
+  animators = {}
 ) => {
   const array = [...unsortedArray];
 
@@ -43,8 +43,8 @@ export const bubbleSort = async (
 
         // Animate using pre-swap positions/values; mutating first causes
         // visual mismatches where bar heights seem to belong to wrong indices.
-        if (typeof swapAnimator === "function") {
-          await swapAnimator(array, j, j + 1);
+        if (typeof animators.swap === "function") {
+          await animators.swap(array, j, j + 1);
         }
 
         if (control.stop) return;
