@@ -22,7 +22,7 @@
         <div class="control-field">
           <label class="control-label" for="sampleSize">
             Sample size
-            <span class="control-value" id="sampleSizeValue" aria-live="polite">10</span>
+            <span class="control-value" id="sampleSizeValue" aria-live="polite">20</span>
           </label>
           <div class="range-row">
             <span class="range-hint">small</span>
@@ -31,9 +31,9 @@
               class="range range--sample-size"
               type="range"
               min="6"
-              max="26"
+              max="50"
               step="1"
-              value="10"
+              value="20"
             />
             <span class="range-hint">large</span>
           </div>
@@ -41,9 +41,9 @@
 
         <div class="control-field">
           <label class="control-label" for="stepDelay">
-            Step delay
+            Speed
             <span class="control-unit">(ms)</span>
-            <span class="control-value" id="stepDelayValue" aria-live="polite">300</span>
+            <span class="control-value" id="stepDelayValue" aria-live="polite">1000</span>
           </label>
           <div class="range-row">
             <span class="range-hint">fast</span>
@@ -51,10 +51,10 @@
               id="stepDelay"
               class="range range--step-delay"
               type="range"
-              min="40"
-              max="1000"
+              min="50"
+              max="2000"
               step="10"
-              value="300"
+              value="1000"
             />
             <span class="range-hint">slow</span>
           </div>
@@ -67,12 +67,17 @@
             <option class="option" value="selection">Selection sort</option>
             <option class="option" value="bubble">Bubble sort</option>
             <option class="option" value="merge">Merge sort</option>
+            <option class="option" value="insertion">Insertion sort</option>
           </select>
         </div>
 
         <div class="controls-actions">
           <button type="button" class="button button--run">Run</button>
-          <button type="button" class="button button--reset">Reset</button>
+          <button type="button" class="button button--random-data">Random data</button>
+          <button type="button" class="button button--reset-all" disabled>
+            Reset
+          </button>
+
         </div>
       </div>
     </div>

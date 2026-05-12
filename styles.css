@@ -316,6 +316,13 @@ body {
   box-shadow: none;
 }
 
+.button--reset-all:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  filter: grayscale(0.25);
+}
+
 .select-input {
   width: 100%;
   cursor: pointer;

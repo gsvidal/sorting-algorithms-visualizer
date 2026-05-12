@@ -1,27 +1,32 @@
 import { selectionSort } from "./selectionSort.mjs";
 import { bubbleSort } from "./bubbleSort.mjs";
 import { mergeSort } from "./mergeSort.mjs";
+import { insertionSort } from "./insertionSort.mjs";
+import { animateHorizontalShift, animateHorizontalSwap } from "./animations.mjs";
 
 const CANVAS_MAX_HEIGHT = 500;
 const CANVAS_MAX_WIDTH = 1000;
 const CANVAS_PADDING_X = 15;
 
-const generateArray = (size = 10) => {
+const generateArray = (size = 20) => {
   // console.log("generate");
   const ar = new Array(size)
     .fill(0)
     .map(
-      (el) => el + 10 + Math.floor((CANVAS_MAX_HEIGHT - 100) * Math.random())
+      (el) => el + 20 + Math.floor((CANVAS_MAX_HEIGHT - 100) * Math.random())
     );
   return ar;
 };
 
 let defaultArray = generateArray();
+/** Copia del array al pulsar Run; Reset restaura esto y para el sort sin regenerar. */
+let snapshotBeforeRun = null;
 
 const algorithms = {
   selection: selectionSort,
   bubble: bubbleSort,
   merge: mergeSort,
+  insertion: insertionSort,
 };
 
 const legendSelection = `
@@ -61,11 +66,24 @@ const legendMerge = `
     <p class='time-complexity'>Time complexity : O(n log n)</p>
   </div>
   `;
+const legendInsertion = `
+  <div class="legend-content border">
+    <p class="legend-description"><strong>How it works:</strong> Builds a sorted prefix from left to right. For each new value, it shifts larger elements one position to the right until it finds the correct insertion point.</p>
+    <div class="legend-container">
+      <span class="legend-color legend-color--red"></span>: <span>Shifting value</span>
+    </div>
+    <div class="legend-container">
+      <span class="legend-color legend-color--green"></span>: <span>Current insertion target</span>
+    </div>
+    <p class='time-complexity'>Time complexity : O(n²)</p>
+  </div>
+  `;
 
 const legendText = {
   selection: legendSelection,
   bubble: legendBubble,
   merge: legendMerge,
+  insertion: legendInsertion,
 };
 
 let minIdx, currentIdx;
@@ -91,73 +109,110 @@ document.addEventListener("DOMContentLoaded", function () {
   syncSampleSizeLabel();
   syncDelayLabel();
 
-  // Bar properties
-  const barSpacing = 20;
+  // Bar properties — gap scales down as sample count goes up (same canvas width).
   canvas.height = CANVAS_MAX_HEIGHT;
   const barColor = "#9c7eff";
   const redColor = "#ff8383";
   const greenColor = "#85ff85";
+
+  const getBarSpacing = (dataLength) => {
+    const n = Math.min(80, Math.max(1, dataLength));
+    const minN = Number(sampleSizeInput.min) || 6;
+    const maxN = Number(sampleSizeInput.max) || 50;
+    const t = Math.min(1, Math.max(0, (n - minN) / (maxN - minN || 1)));
+    const maxGap = 24;
+    const minGap = 2;
+    return maxGap - t * (maxGap - minGap);
+  };
+
+  const getBarMetrics = (dataLength) => {
+    const barSpacing = getBarSpacing(dataLength);
+    const barWidth =
+      (CANVAS_MAX_WIDTH - CANVAS_PADDING_X * 2 - barSpacing * (dataLength - 2.5)) /
+      dataLength;
+    const stepX = barWidth + barSpacing;
+    return { barWidth, stepX };
+  };
+
+  const drawBars = (data, colorForIndex, xOffsetByIndex = {}, skipIndex = null) => {
+    const { barWidth, stepX } = getBarMetrics(data.length);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < data.length; i++) {
+      if (i === skipIndex) continue;
+      const x = i * stepX + (xOffsetByIndex[i] ?? 0);
+      const y = canvas.height - data[i];
+      ctx.fillStyle = colorForIndex(i);
+      ctx.fillRect(x, y, barWidth, data[i]);
+    }
+  };
+
+  const swapAnimator = (data, leftIdx, rightIdx) =>
+    animateHorizontalSwap({
+      data,
+      leftIdx,
+      rightIdx,
+      control,
+      getBarMetrics,
+      drawBars,
+      highlightColor: redColor,
+      defaultColor: barColor,
+    });
+  const shiftAnimator = (data, fromIdx, toIdx) =>
+    animateHorizontalShift({
+      data,
+      fromIdx,
+      toIdx,
+      control,
+      getBarMetrics,
+      drawBars,
+      highlightColor: redColor,
+      defaultColor: barColor,
+    });
+
   const renderCanvas = (alg, data, minIdx, currentIdx) => {
     if (alg === "merge") {
       const mergeLo = minIdx ?? 0;
       const mergeHi = currentIdx ?? data.length;
-      const barWidth =
-        (CANVAS_MAX_WIDTH -
-          CANVAS_PADDING_X * 2 -
-          barSpacing * (data.length - 2.5)) /
-        data.length;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < data.length; i++) {
-        const x = i * (barWidth + barSpacing);
-        const y = canvas.height - data[i];
-        if (i >= mergeLo && i < mergeHi) {
-          ctx.fillStyle = barColor;
-        } else {
-          ctx.fillStyle = "#e1d7ff";
-        }
-        ctx.fillRect(x, y, barWidth, data[i]);
-      }
+      drawBars(data, (i) => (i >= mergeLo && i < mergeHi ? barColor : "#e1d7ff"));
     } else {
-      const barWidth =
-        (CANVAS_MAX_WIDTH -
-          CANVAS_PADDING_X * 2 -
-          barSpacing * (data.length - 2.5)) /
-        data.length;
-      // Clear the canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Draw bars
-      for (let i = 0; i < data.length; i++) {
-        const x = i * (barWidth + barSpacing);
-        const y = canvas.height - data[i];
+      /** After insertion copies A[j]->A[j+1], both hold same value briefly; omit left slot visually. */
+      const skipInsertionDuplicate =
+        alg === "insertion-shift" &&
+        typeof currentIdx === "number" &&
+        !Number.isNaN(currentIdx)
+          ? currentIdx
+          : null;
 
+      drawBars(
+        data,
+        (i) => {
         if (alg === "selection") {
-          // Check if the current bar is the one to highlight as the minimum or the current
-          if (i === minIdx) {
-            ctx.fillStyle = redColor;
-          } else if (i === currentIdx) {
-            ctx.fillStyle = greenColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "bubble") {
-          if (i === minIdx || i === currentIdx) {
-            ctx.fillStyle = greenColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else if (alg === "bubble-swap") {
-          if (i === minIdx || i === currentIdx) {
-            ctx.fillStyle = redColor;
-          } else {
-            ctx.fillStyle = barColor;
-          }
-        } else {
-          ctx.fillStyle = barColor;
+          if (i === minIdx) return redColor;
+          if (i === currentIdx) return greenColor;
+          return barColor;
         }
-        // Draw the bar
-        ctx.fillRect(x, y, barWidth, data[i]);
-      }
+        if (alg === "selection-swap") {
+          return i === minIdx || i === currentIdx ? redColor : barColor;
+        }
+        if (alg === "bubble") {
+          return i === minIdx || i === currentIdx ? greenColor : barColor;
+        }
+        if (alg === "bubble-swap") {
+          return i === minIdx || i === currentIdx ? redColor : barColor;
+        }
+        if (alg === "insertion") {
+          if (i === minIdx) return greenColor;
+          if (i === currentIdx) return redColor;
+          return barColor;
+        }
+        if (alg === "insertion-shift") {
+          return i === minIdx || i === currentIdx ? redColor : barColor;
+        }
+        return barColor;
+        },
+        {},
+        skipInsertionDuplicate
+      );
     }
   };
 
@@ -165,39 +220,74 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const selectElement = document.querySelector("select");
   const runButton = document.querySelector(".button--run");
+  const randomDataButton = document.querySelector(".button--random-data");
+  const resetAllButton = document.querySelector(".button--reset-all");
 
   const control = {
     time: +delayInput.value,
     stop: false,
   };
 
+  let sortInProgress = false;
+
   const syncRunAvailability = () => {
-    runButton.disabled = selectElement.value === "none";
+    runButton.disabled =
+      sortInProgress || selectElement.value === "none";
+    /** Reset solo cuando Run no se puede pulsar (durante sort) y hay snapshot. */
+    resetAllButton.disabled =
+      !snapshotBeforeRun?.length || !runButton.disabled;
   };
 
-  const reset = (size = 10, reset) => {
-    if (reset) {
-      sampleSizeInput.value = "10";
-      syncSampleSizeLabel();
-    }
-    selectElement.value = "none";
+  const disableResetUntilNextRun = () => {
+    snapshotBeforeRun = null;
+    syncRunAvailability();
+  };
+
+  /**
+   * Regenera valores aleatorios. Si preserveSortChoice es true, mantiene método y leyenda.
+   */
+  const regenerateData = (size, preserveSortChoice) => {
+    disableResetUntilNextRun();
     defaultArray = [...generateArray(size)];
     selectElement.removeAttribute("disabled");
     control.stop = true;
     renderCanvas("none", defaultArray);
-    legend.innerHTML = "";
+
+    if (preserveSortChoice) {
+      const selected = selectElement.value;
+      if (selected !== "none") {
+        legend.innerHTML = legendText[selected];
+      }
+    } else {
+      selectElement.value = "none";
+      legend.innerHTML = "";
+    }
     syncRunAvailability();
   };
 
-  const resetButton = document.querySelector(".button--reset");
+  randomDataButton.addEventListener("click", () =>
+    regenerateData(+sampleSizeInput.value, true)
+  );
 
-  resetButton.addEventListener("click", () => reset(10, true));
+  resetAllButton.addEventListener("click", () => {
+    if (!snapshotBeforeRun?.length) return;
+    control.stop = true;
+    defaultArray = [...snapshotBeforeRun];
+    selectElement.removeAttribute("disabled");
+    selectElement.value = "none";
+    legend.innerHTML = "";
+    renderCanvas("none", defaultArray);
+    disableResetUntilNextRun();
+  });
 
   const runSelectedSort = async () => {
     const selectedAlgorithm = selectElement.value;
     if (selectedAlgorithm === "none") return;
 
-    runButton.disabled = true;
+    snapshotBeforeRun = [...defaultArray];
+    sortInProgress = true;
+    syncRunAvailability();
+
     selectElement.setAttribute("disabled", "true");
 
     try {
@@ -206,12 +296,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const sortedArray = await algorithms[selectedAlgorithm](
         defaultArray,
         renderCanvas,
-        control
+        control,
+        { swap: swapAnimator, shift: shiftAnimator }
       );
-      if (sortedArray?.length > 0) {
-        renderCanvas("none", sortedArray);
+      if (!control.stop && sortedArray?.length > 0) {
+        defaultArray = [...sortedArray];
+        renderCanvas("none", defaultArray);
       }
     } finally {
+      sortInProgress = false;
       selectElement.removeAttribute("disabled");
       syncRunAvailability();
     }
@@ -240,6 +333,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   sampleSizeInput.addEventListener("change", (event) => {
     syncSampleSizeLabel();
-    reset(+event.target.value);
+    regenerateData(+event.target.value, true);
   });
 });
